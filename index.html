@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Keypad Soundboard</title>
+    <link rel="icon"
+        href="https://www.raspberrypi.com/app/uploads/2021/10/cropped-Raspberry-Pi-Favicon-100x100-1-300x300.png"
+        type="image/png">
+</head>
+
+<body>
+    <div>
+        <p>Built with a Raspberry Pi Pico W</p>
+        <img src="https://www.raspberrypi.com/app/uploads/2021/10/cropped-Raspberry-Pi-Favicon-100x100-1-300x300.png"
+            alt="Logo">
+    </div>
+    <div id="connected">
+        Not connected
+    </div>
+    <hr>
+
+    <div id="response">
+        Received:
+    </div>
+
+    <script>
+        var ws = new WebSocket("ws://" + location.hostname + ":80");
+
+        const connectedElement = document.getElementById("connected");
+        const stateMap = new Map();
+        stateMap.set(ws.CLOSED, "Closed");
+        stateMap.set(ws.CLOSING, "Closing");
+        stateMap.set(ws.CONNECTING, "Connecting");
+        stateMap.set(ws.OPEN, "Open");
+
+        const checkConnected = function () {
+            if (stateMap.has(ws.readyState)) {
+                connectedElement.innerText = stateMap.get(ws.readyState);
+            } else {
+                connectedElement.innerText = "unknown state: " + ws.readyState;
+            }
+            if (ws.readyState !== ws.OPEN) {
+                setTimeout(checkConnected, 1000);
+            }
+        }
+        checkConnected();
+
+        ws.onopen = function (evt) {
+            console.log(evt);
+            connectedElement.innerText = "Connected!";
+            ws.send("Hello");
+        };
+
+        ws.onmessage = function (evt) {
+            document.getElementById("response").innerHTML += "<br>" + evt.data;
+        };
+
+        ws.onclose = function () {
+            document.getElementById("connected").innerText = "Disconnected...";
+        }
+    </script>
+</body>
+
+</html>
