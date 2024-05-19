@@ -18,6 +18,9 @@
     <div id="connected">
         Not connected
     </div>
+    <div id="heart">
+        Off
+    </div>
     <hr>
 
     <div id="response">
@@ -25,6 +28,8 @@
     </div>
 
     <script>
+        var heartOn = false;
+
         var ws = new WebSocket("ws://" + location.hostname + ":80");
 
         const connectedElement = document.getElementById("connected");
@@ -53,6 +58,12 @@
         };
 
         ws.onmessage = function (evt) {
+            if (evt.data === "heartbeat") {
+                heartOn = !heartOn;
+                document.getElementById("heart").innerText = (heartOn) ? "On" : "Off";
+                return;
+            }
+
             document.getElementById("response").innerHTML += "<br>" + evt.data;
         };
 

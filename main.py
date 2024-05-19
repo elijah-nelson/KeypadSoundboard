@@ -3,6 +3,9 @@ import time
 from wifi import connect_wlan
 from ws_connection import ClientClosedError
 from ws_server import WebSocketClient, WebSocketServer
+from machine import Pin
+
+onboard_led = Pin("LED", Pin.OUT)
 
 
 class TestClient(WebSocketClient):
@@ -25,14 +28,35 @@ class TestClient(WebSocketClient):
                 print(cmd + " Response")
         except ClientClosedError:
             self.connection.close()
+    
+    def send_heartbeat(self):
+        self.connection.write("heartbeat")
 
 
 class TestServer(WebSocketServer):
+    HEARTBEAT_MS = 1000
+
     def __init__(self):
         super().__init__("index.html", 4)
+        self._previous_heartbeat = time.ticks_ms()
 
     def _make_client(self, conn):
         return TestClient(conn)
+    
+    def process_all(self):
+        for client in self._clients:
+            client.process()
+
+    def hearbeat_all(self):
+        current = time.ticks_ms()
+        if current - self._previous_heartbeat < TestServer.HEARTBEAT_MS:
+            return
+        
+        onboard_led.toggle()
+
+        self._previous_heartbeat = current
+        for client in self._clients:
+            client.send_heartbeat()
 
 
 print("Connecting to wlan...")
@@ -40,16 +64,10 @@ connect_wlan()
 server = TestServer()
 server.start()
 
-times_processed = 0
-start = time.ticks_ms()
 try:
     while True:
         server.process_all()
-        times_processed += 1
-        if times_processed % 200 == 0:
-            current = time.ticks_ms()
-            print(f"Took {current - start}ms to do another 200 requests ({times_processed} total)")
-            start = current
+        server.hearbeat_all()
 
 except KeyboardInterrupt:
     pass
