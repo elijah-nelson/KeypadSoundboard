@@ -23,21 +23,31 @@
     </div>
     <hr>
 
+    <input type="button" value="PLAY" onclick="play()">
+    <audio id="audio"
+        src="https://raw.githubusercontent.com/elijah-nelson/KeypadSoundboard/main/ignore/resources/wahwahtrumpet.wav">
+    </audio>
+
     <div id="response">
         Received:
     </div>
 
     <script>
-        var heartOn = false;
+        // Constants
+        const defaultHostname = "10.1.1.159";
+        const ws = new WebSocket("ws://" + (location.hostname ? location.hostname : defaultHostname) + ":80");
+        const stateMap = new Map([
+            [ws.CLOSED, "Closed"],
+            [ws.CLOSING, "Closing"],
+            [ws.CONNECTING, "Connecting"],
+            [ws.OPEN, "Open"]
+        ]);
 
-        var ws = new WebSocket("ws://" + location.hostname + ":80");
-
+        // Elements
         const connectedElement = document.getElementById("connected");
-        const stateMap = new Map();
-        stateMap.set(ws.CLOSED, "Closed");
-        stateMap.set(ws.CLOSING, "Closing");
-        stateMap.set(ws.CONNECTING, "Connecting");
-        stateMap.set(ws.OPEN, "Open");
+
+        // Global variables
+        var heartOn = false;
 
         const checkConnected = function () {
             if (stateMap.has(ws.readyState)) {
@@ -69,6 +79,11 @@
 
         ws.onclose = function () {
             document.getElementById("connected").innerText = "Disconnected...";
+        }
+
+        function play() {
+            var audio = document.getElementById("audio");
+            audio.play();
         }
     </script>
 </body>
