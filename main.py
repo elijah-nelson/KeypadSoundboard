@@ -39,6 +39,7 @@ class TestServer(WebSocketServer):
     def __init__(self):
         super().__init__("index.html", 4)
         self._previous_heartbeat = time.ticks_ms()
+        self.i = 1
 
     def _make_client(self, conn):
         return TestClient(conn)
@@ -51,6 +52,11 @@ class TestServer(WebSocketServer):
         current = time.ticks_ms()
         if current - self._previous_heartbeat < TestServer.HEARTBEAT_MS:
             return
+        
+        if self.i % 8 == 0:
+            for client in self._clients:
+                client.connection.write("trigger " + str(((self.i // 8) % 4) + 1))
+        self.i += 1
         
         onboard_led.toggle()
 

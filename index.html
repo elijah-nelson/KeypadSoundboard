@@ -83,13 +83,18 @@
         main {
             flex-grow: 1;
             max-width: 800px;
+
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
         }
 
         .sound-container {
             height: 50px;
             width: 300px;
             border-radius: 10px;
-            margin: 20px;
+            margin: 5px 10px;
             background-color: var(--pi-red);
 
             display: flex;
@@ -143,10 +148,30 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+
+        #heartbeat {
+            position: absolute;
+            width: 50px;
+            top: 10px;
+            right: 50px;
+        }
+
+        .not-faded {
+            opacity: 1;
+            transition: opacity 0.1s ease-in-out;
+        }
+
+        .fade-out {
+            opacity: 0;
+            transition: opacity 1.1s ease-in-out;
+        }
     </style>
 </head>
 
 <body>
+    <img id="heartbeat" class="fade-out"
+        src="https://raw.githubusercontent.com/elijah-nelson/KeypadSoundboard/main/ignore/resources/raspberry-pi.svg"
+        alt="Description of the SVG image">
     <header>
         <img id="logo"
             src="https://raw.githubusercontent.com/elijah-nelson/KeypadSoundboard/main/ignore/resources/raspberry-pi.svg"
@@ -155,26 +180,6 @@
     </header>
     <div id="main-container">
         <main>
-            <div class="sound-container">
-                <div class="left-sound">
-                    <div class="sound-button-container">
-                        <span class="material-symbols-outlined non-selectable">
-                            play_arrow
-                        </span>
-                        <audio id="audio"
-                            src="https://raw.githubusercontent.com/elijah-nelson/KeypadSoundboard/main/ignore/resources/wahwahtrumpet.wav">
-                        </audio>
-                    </div>
-                </div>
-                <div class="right-sound">
-                    <div class="sound-title">
-                        #01 Title of the sound byte
-                    </div>
-                    <div class="sound-length">
-                        0:05
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 
@@ -193,6 +198,7 @@
         // Elements
         const connectedElement = document.getElementById("connected");
         const mainElement = document.getElementsByTagName("main")[0];
+        const heartbeatElement = document.getElementById("heartbeat");
 
         // Global variables
         var heartOn = false;
@@ -306,10 +312,29 @@
         };
 
         ws.onmessage = function (evt) {
-            if (evt.data === "heartbeat") {
-                heartOn = !heartOn;
-                console.log("heartbeat");
+            let [command, ...args] = evt.data.split(" ");
+
+            if (command === "heartbeat") {
+                heartbeatElement.classList.add("not-faded");
+                heartbeatElement.classList.remove("fade-out");
+                setTimeout(() => heartbeatElement.classList.add("fade-out"), 100);
                 return;
+            }
+
+            if (command === "trigger") {
+                if (args.length !== 1) {
+                    console.log("Invalid number of args for trigger command:", evt.data);
+                    return;
+                }
+
+                let num = Number.parseInt(args[0]);
+                if (audioControllers.length < num || num <= 0) {
+                    console.log("Can't trigger", num, "because only", audioControllers.length, "sounds exist");
+                    return;
+                }
+
+                console.log("triggerring", num);
+                audioControllers[num - 1].trigger();
             }
 
             console.log(evt.data);
@@ -318,6 +343,9 @@
         ws.onclose = function () {
         }
 
+        addSoundContainer("Willow Smells", "https://raw.githubusercontent.com/elijah-nelson/KeypadSoundboard/main/ignore/resources/wahwahtrumpet.wav")
+        addSoundContainer("Willow Smells", "https://raw.githubusercontent.com/elijah-nelson/KeypadSoundboard/main/ignore/resources/wahwahtrumpet.wav")
+        addSoundContainer("Willow Smells", "https://raw.githubusercontent.com/elijah-nelson/KeypadSoundboard/main/ignore/resources/wahwahtrumpet.wav")
         addSoundContainer("Willow Smells", "https://raw.githubusercontent.com/elijah-nelson/KeypadSoundboard/main/ignore/resources/wahwahtrumpet.wav")
     </script>
 </body>
